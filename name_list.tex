@@ -1,0 +1,138 @@
+% - Document Class -
+\documentclass[a4paper,12pt,landscape]{article} % Set paper size and font size
+
+% - Packages -
+% Import packages: \usepackage[options]{package}
+% Packages that don't need further configuration are listed here
+% Package imports below are listed with their relevant configuration
+\usepackage[margin=2cm]{geometry} % Set margins
+\usepackage[table]{xcolor} % For cell colors
+\usepackage[export]{adjustbox} % For image alignment
+\usepackage{graphicx} % For including images
+
+% - Font -
+\usepackage{fontspec} % For custom fonts
+\setmainfont{Lato} % Set font
+
+% - Header and Footer -
+% Set page number in footer
+\usepackage{fancyhdr} % import package
+\pagestyle{fancy} % initialize package
+\fancyhf{} % clear header and footer
+\renewcommand{\headrulewidth}{0pt} % remove header line
+\fancyfoot[R]{\thepage} % set page number in footer on right
+
+% Define colors: \definecolor{name}{model}{color-spec}
+\definecolor{purple}{HTML}{8a5fa8}
+\definecolor{grey}{HTML}{e7e3ed}
+\definecolor{white}{HTML}{ffffff}
+\definecolor{black}{HTML}{000000}
+
+% - Table -
+\usepackage{csvsimple} % For reading CSV files
+\usepackage{array} % For column width adjustments
+\usepackage{cellspace} % For cell padding
+\usepackage{colortbl} % For colored cells
+\setlength\cellspacetoplimit{4pt}  % Adjust cell padding
+\setlength\cellspacebottomlimit{4pt}  % Adjust cell padding
+\renewcommand{\arraystretch}{1.5} % Adjust row height
+\setlength{\tabcolsep}{8pt} % Adjust cell padding
+\arrayrulecolor{grey}
+
+% - Custom Commands -
+% Define custom commands: \newcommand{name}[num args]{definition}
+% Purple cell sets cell color to purple and text color to white, bold
+% #1 is the first argument passed to the function
+\newcommand{\PurpleCell}[1]{\cellcolor{purple}\textcolor{white}{\textbf{#1}}}
+% Purple text sets text color to purple and makes text bold
+% #1 is the first argument passed to the function
+\newcommand{\PurpleText}[1]{\textcolor{purple}{\textbf{#1}}}
+% Define big sections of table: header, footer, and logo
+\newcommand{\header}{
+  \PurpleText{ % First line in table is purple, with page number
+    \thepage\ - Trans Murder Monitoring Global Update \textbullet{}
+    Trans Day of Remembrance 2024
+  }
+}
+\newcommand{\logo}{ % logo in last row, scaled down, vertically centered
+  \hfill\includegraphics[scale=.10,valign=c]{./assets/logo.png}
+}
+\newcommand{\footer}{ % TGEU in last row with URL
+  \shortstack{
+    \rule{0pt}{4ex} % Add vertical padding, align with logo
+    \PurpleText{TGEU | Trans Murder Monitoring} \\
+    \PurpleText{\ \ tgeu.org/trans-murder-monitoring}
+  }
+}
+% Sources URLs smaller font respect linebreak
+\newcommand{\SourcesFormat}[1]{
+  % add paragraph box 9 lins tall, same width as second column
+  \parbox[t][9\baselineskip][t]{0.78\linewidth}{
+    % tiny font. 'stack' allows use of linebreak `\\` within a cell
+    % rule bumps the text down by 2 letter `x`s
+    % #1 is 'first arg to this function'
+    \tiny\shortstack[l]{\rule{0pt}{2ex}#1}
+  }
+}
+
+% - Document -
+\begin{document}
+
+% % Read CSV and Format Output
+\csvreader[
+	before reading={\catcode`\"=9}, % ignore double quotes csv puts around cells
+	late after line=\newpage % each csv row on new page
+]{./data/name_data_sanitized.csv}{ % input csv name
+	Name of the victim=\Name, % csv heading = \CommandBelow
+	ReportAge=\Age, % merge of age and age range
+	Occupation=\Occupation,
+	Date of the murder dd/mm/yyyy=\Date,
+	City=\City,
+	Country/territory of the murder=\Country,
+	Type of location of the murder=\Location,
+	Type of murder=\Cause,
+	Short description (English)=\Remarks,
+	Short description (Spanish)=\Observaciones,
+	Reported by=\Reporter,
+	FirstNSources=\Sources % limited by python to avoid overfilling box
+}%
+{ % begin a table, contents at top, with 2 cols w/widths: .12,.78 percent page
+	% use of pipes here says 'use vertical bars'
+	\begin{tabular}[t]{ |p{0.12\linewidth}|p{0.78\linewidth}| }
+		% Row 1: Title row. 'multicolumn1' allows selective turn off vert bars
+		\multicolumn{1}{c}{}        & \multicolumn{1}{l}{\header}    \\
+		\hline % add horizontal line before next row
+		% Data rows % header row with name in grey cell
+		\PurpleCell{Name}           & \cellcolor{grey}\textbf{\Name} \\
+		\hline
+		\PurpleCell{Age}            & \Age                           \\
+		\hline
+		\PurpleCell{Occupation}     & \Occupation                    \\
+		\hline
+		\PurpleCell{Date}           & \Date                          \\
+		\hline
+		\PurpleCell{City}           & \City                          \\
+		\hline
+		\PurpleCell{Country}        & \Country                       \\
+		\hline
+		\PurpleCell{Location type}  & \Location                      \\
+		\hline
+		\PurpleCell{Cause of death} & \Cause                         \\
+		\hline
+		\PurpleCell{Remarks}        & \Remarks                       \\
+		\hline
+		\PurpleCell{Observaciones}  & \Observaciones                 \\
+		\hline
+		\PurpleCell{Reported by}    & \Reporter                      \\
+		\hline
+		\PurpleCell{Sources}        & \SourcesFormat{\Sources}       \\
+		\hline
+		% Row 14: Footer row with image
+		\multicolumn{1}{c}{\logo}   & \multicolumn{1}{l}{\footer}
+	\end{tabular}
+}
+
+
+
+\end{document}
+
