@@ -13,6 +13,9 @@ output/*
 # Ignore all pdf and csv files
 *.pdf
 *.csv
+# Allow csv/pdfs that begin with 'example'
+!example*.pdf
+!example*.csv
 
 # -- Python --
 
