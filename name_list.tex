@@ -83,18 +83,18 @@
 	before reading={\catcode`\"=9}, % ignore double quotes csv puts around cells
 	late after line=\newpage % each csv row on new page
 ]{./data/name_data_sanitized.csv}{ % input csv name
-	Name of the victim=\Name, % csv heading = \CommandBelow
-	ReportAge=\Age, % merge of age and age range
+	Name=\Name, % csv heading = \CommandBelow
+	Age=\Age, % merge of age and age range
 	Occupation=\Occupation,
-	Date of the murder dd/mm/yyyy=\Date,
+	Date=\Date,
 	City=\City,
-	Country/territory of the murder=\Country,
-	Type of location of the murder=\Location,
-	Type of murder=\Cause,
-	Short description (English)=\Remarks,
-	Short description (Spanish)=\Observaciones,
+	Country=\Country,
+	Location Type=\Location,
+	Cause of death=\Cause,
+	Remarks=\Remarks,
+	Observaciones=\Observaciones,
 	Reported by=\Reporter,
-	FirstNSources=\Sources % limited by python to avoid overfilling box
+	Sources=\Sources % limited by python to avoid overfilling box
 }%
 { % begin a table, contents at top, with 2 cols w/widths: .12,.78 percent page
 	% use of pipes here says 'use vertical bars'

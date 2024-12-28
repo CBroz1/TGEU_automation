@@ -1,0 +1,105 @@
+% - Document Class -
+\documentclass[12pt]{article} % Set paper size and font size
+
+% - Packages -
+% Import packages: \usepackage[options]{package}
+% Packages that don't need further configuration are listed here
+% Package imports below are listed with their relevant configuration
+\usepackage[
+  a4paper,
+  top=3.5cm,
+  bottom=4cm,
+  left=2cm,
+  right=2cm,
+]{geometry} % Set margins
+\usepackage[table]{xcolor} % For cell colors
+\usepackage[export]{adjustbox} % For image alignment
+\usepackage{lipsum}
+
+% - Header and Footer -
+% Set page number in footer
+\usepackage{fancyhdr} % import package
+\setlength{\headheight}{1.5cm} % Increase header height if needed
+% \setlength{\headsep}{20pt} % Space between header and text
+% \setlength{\footskip}{30pt} % Space between footer and text
+% First page header (centered)
+\fancypagestyle{firstpage}{%
+    \fancyhf{} % Clear default header/footer
+    \fancyhead[C]{\headlogo} % Centered logo
+    \fancyfoot[C]{\footer} % Centered footer
+    \renewcommand{\headrulewidth}{0pt} % No header line
+    \renewcommand{\footrulewidth}{0pt} % No footer line
+}
+% Remaining pages header (right-aligned)
+\fancyhf{} % Clear default header/footer
+\fancyhead[R]{\headlogo} % Right-aligned logo
+\fancyfoot[C]{text \linebreak text} % Centered footer
+\renewcommand{\headrulewidth}{0pt} % No header line
+\renewcommand{\footrulewidth}{0pt} % No footer line
+
+
+% - Font -
+\usepackage{fontspec} % For custom fonts
+\setmainfont{Lato} % Set font
+
+% Define colors: \definecolor{name}{model}{color-spec}
+\definecolor{purple}{HTML}{8a5fa8}
+\definecolor{grey}{HTML}{e7e3ed}
+\definecolor{white}{HTML}{ffffff}
+\definecolor{black}{HTML}{000000}
+
+% - Custom Commands -
+% Define custom commands: \newcommand{name}[num args]{definition}
+% Purple cell sets cell color to purple and text color to white, bold
+% #1 is the first argument passed to the function
+\newcommand{\PurpleCell}[1]{\cellcolor{purple}\textcolor{white}{\textbf{#1}}}
+% Purple text sets text color to purple and makes text bold
+% #1 is the first argument passed to the function
+\newcommand{\PurplePlain}[1]{\textcolor{purple}{#1}}
+\newcommand{\PurpleText}[1]{\textcolor{purple}{\textbf{#1}}}
+% Define big sections of table: header, footer, and logo
+\usepackage[hidelinks]{hyperref}
+\newcommand{\footer}{
+  \small{
+    \PurplePlain{\textbf{TGEU} | Trans Murder Monitoring} \\
+    \PurplePlain{
+        \href{http://www.tgeu.org}{\underline{\textbf{tgeu.org}}} |
+        \href{http://www.tgeu.org/trans-murder-monitoring}{
+          \underline{tgeu.org/trans-murder-monitoring}
+        }
+    }
+  }
+}
+
+% - Logo -
+\usepackage{graphicx} % For including images
+\newcommand{\headlogo}{\includegraphics[scale=0.12]{./assets/logo-with-text.png}}
+
+% - Table -
+\usepackage{csvsimple} % For reading CSV files
+\usepackage{array} % For column width adjustments
+\usepackage{cellspace} % For cell padding
+\usepackage{colortbl} % For colored cells
+\setlength\cellspacetoplimit{4pt}  % Adjust cell padding
+\setlength\cellspacebottomlimit{4pt}  % Adjust cell padding
+\renewcommand{\arraystretch}{1.5} % Adjust row height
+\setlength{\tabcolsep}{8pt} % Adjust cell padding
+\arrayrulecolor{grey}
+
+% - Document -
+\begin{document}
+
+% Apply first-page style
+\thispagestyle{firstpage}
+\centering
+\vspace*{3cm}
+{\Huge \PurpleText{Trans Murder Monitoring \\ 2024 Update}}\\[1cm]
+{\Large Subtitle One}\\[0.5cm]
+{\Large Subtitle Two}\\[2cm]
+
+% Content for remaining pages
+\newpage
+\lipsum[4-20] % Replace with your content
+
+\end{document}
+
