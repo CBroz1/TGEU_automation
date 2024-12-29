@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from itertools import chain  # For flattening lists of lists
 from pathlib import Path
 
 import pandas as pd
@@ -89,6 +90,7 @@ class DataPreprocessor:
         _ = self.generate_aggregate()
         _ = self.save_demo_aggs()
         _ = self.save_region_aggs()
+        _ = self.write_yearly_inputs_list()
 
     def fuzzy_input(self, input_file):
         """If input file does not exist, check for file with current year."""
@@ -439,9 +441,11 @@ class DataPreprocessor:
             # drop the category columns
             sub_df = sub_df.drop(columns=["Category_EN", "Category_ES"])
             sub_df = sub_df[["ES", "EN", "Count"]]  # Spanish first
-            sub_df = sub_df.rename(columns={"EN": head_en, "ES": head_es})
             sub_df.sort_values(by="Count", ascending=False, inplace=True)
-            sub_df.to_csv(f"data/demo-{table}.csv", index=False)
+            sub_df = sub_df.rename(
+                columns={"EN": head_en, "ES": head_es, "Count": " "}
+            )
+            sub_df.to_csv(f"data/yearly-demo-{table}.csv", index=False)
 
     def load_countries(self):
         data = pd.read_csv("./data/country_catalog.csv")
@@ -485,9 +489,19 @@ class DataPreprocessor:
                     "size": head["size"],
                 }
             )
-            countries_df.to_csv(
-                f"data/region-{head['Region_EN']}.csv", index=False
+            fname = (
+                "data/yearly-region-"
+                + head["Region_EN"].replace(" ", "")
+                + ".csv"
             )
+            countries_df.to_csv(fname, index=False)
+
+    def write_yearly_inputs_list(self):
+        data_dir = Path("./data/")
+        all_ins = chain(data_dir.glob("y*reg*csv"), data_dir.glob("y*demo*csv"))
+        with_relpath = [f"./{csv}" for csv in all_ins]
+        with open(data_dir / "_latex_csv_inputs.txt", "w") as f:
+            f.write(", \n".join(with_relpath))
 
 
 if __name__ == "__main__":

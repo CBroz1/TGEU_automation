@@ -20,9 +20,6 @@
 % Set page number in footer
 \usepackage{fancyhdr} % import package
 \setlength{\headheight}{1.5cm} % Increase header height if needed
-% \setlength{\headsep}{20pt} % Space between header and text
-% \setlength{\footskip}{30pt} % Space between footer and text
-% First page header (centered)
 \fancypagestyle{firstpage}{%
     \fancyhf{} % Clear default header/footer
     \fancyhead[C]{\headlogo} % Centered logo
@@ -31,11 +28,13 @@
     \renewcommand{\footrulewidth}{0pt} % No footer line
 }
 % Remaining pages header (right-aligned)
-\fancyhf{} % Clear default header/footer
-\fancyhead[R]{\headlogo} % Right-aligned logo
-\fancyfoot[C]{text \linebreak text} % Centered footer
-\renewcommand{\headrulewidth}{0pt} % No header line
-\renewcommand{\footrulewidth}{0pt} % No footer line
+\fancypagestyle{rest}{%
+    \fancyhf{} % Clear default header/footer
+    \fancyhead[R]{\headlogo} % Centered logo
+    \fancyfoot[C]{\footer} % Centered footer
+    \renewcommand{\headrulewidth}{0pt} % No header line
+    \renewcommand{\footrulewidth}{0pt} % No footer line
+}
 
 
 % - Font -
@@ -52,7 +51,7 @@
 % Define custom commands: \newcommand{name}[num args]{definition}
 % Purple cell sets cell color to purple and text color to white, bold
 % #1 is the first argument passed to the function
-\newcommand{\PurpleCell}[1]{\cellcolor{purple}\textcolor{white}{\textbf{#1}}}
+\newcommand{\PCell}[1]{\cellcolor{purple}\textcolor{white}{\textbf{#1}}}
 % Purple text sets text color to purple and makes text bold
 % #1 is the first argument passed to the function
 \newcommand{\PurplePlain}[1]{\textcolor{purple}{#1}}
@@ -86,20 +85,62 @@
 \setlength{\tabcolsep}{8pt} % Adjust cell padding
 \arrayrulecolor{grey}
 
+% - Loop inputs -
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{pgffor} % For looping
+\usepackage{catchfile} % To include dynamic file lists
+% \newcommand{\csvlist}{}
+\CatchFileDef{\csvlist}{./data/_latex_csv_inputs.txt}{\relax}
+% % Process the raw list into individual items (split by newline)
+% \newcommand{\processinputlist}{
+%   \forcsvlist{\listadd{\csvlist}}{\rawcsvlist}
+% }
+
+% \newcommand{\csvlist}{\input{./data/_latex_csv_inputs.tex}}
+
+
 % - Document -
 \begin{document}
 
 % Apply first-page style
 \thispagestyle{firstpage}
-\centering
-\vspace*{3cm}
-{\Huge \PurpleText{Trans Murder Monitoring \\ 2024 Update}}\\[1cm]
-{\Large Subtitle One}\\[0.5cm]
-{\Large Subtitle Two}\\[2cm]
-
-% Content for remaining pages
+\begin{center}
+	\vspace*{3cm}
+	{\Huge \PurpleText{Trans Murder Monitoring \\ 2024 Update}}\\[1cm]
+	{\Large Subtitle One}\\[0.5cm]
+	{\Large Subtitle Two}\\[2cm]
+\end{center}
 \newpage
-\lipsum[4-20] % Replace with your content
+
+% Tables
+
+% Include tables from combined CSV files
+\thispagestyle{rest}
+\foreach \csvfile in \csvlist{
+\csvloop{
+	file=\csvfile,
+	respect all,
+	separator=comma,
+	no head,
+	before reading={
+			\begin{longtable}{
+				|p{0.4\textwidth}|p{0.4\textwidth}|>{
+				\columncolor[gray]{0.9}\centering\arraybackslash
+				}p{0.05\textwidth}|}
+
+				\toprule
+				},
+				command={\csviffirstrow
+				{\PCell{\csvcoli} & \PCell{\csvcolii} & \PCell{\csvcoliii}}
+				{\csvcoli         & \csvcolii         & \csvcoliii}
+					},
+				late after line=                                            \\\hline,
+				late after first line=                                      \\\midrule\endhead,
+				late after last line=                                       \\\bottomrule,
+				after reading=\end{longtable}
+		}
+}
 
 \end{document}
 
