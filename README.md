@@ -18,23 +18,11 @@ Automation tools to support data processing for [TGEU](tgeu.org).
   - `./output/{YEAR}-TMM-Namelist.pdf` - the final pdf
 - **Yearly update**: Python uses the master list and the countries catalog to
     generate several output tables followed by the yearly update pdf:
-  - `./output/region-{region}.csv` where region is one of:
-    - Africa
-    - Asia
-    - Europe
-    - NAmerica
-    - LAmerica
-  - `./output/demo-{demo}.csv` where demo is one of:
-    - occupation
-    - age
-    - migrant
-    - race
-    - gender
-    - sex
-    - orientation
-    - disablility
-    - murder
-    - location
+  - `./data/yearly-region-{region}.csv` where each region is one of: Asia,
+    Europe, etc.
+  - `./data/yearly-demo-{demo}.csv` where demo is one of: occupation, age,
+    gender, etc.
+  - `./output/{YEAR}-TMM-Yearly-Update.pdf` - the final pdf
 
 [^1]: It is assumed that the options are listed in the same order in both
     languages, ignoring country/region columns.
@@ -44,10 +32,10 @@ Automation tools to support data processing for [TGEU](tgeu.org).
 TODO:
 
 - python:
-  - need total for title page
+  - Why does the total differ?
 - tex
-  - read each table from df_agg
-  - read year and totals
+  - prevent page breaks in the middle of tables
+  - move acknowledgements to seperate file
 - organization
   - tex work to subdirectory
   - makefile? python main?
@@ -75,3 +63,7 @@ TODO:
     'unknown / not applicable' - is this intentional? should this be done in a
     pdf i produce?
   - I noticed inconsistent capitalization of region/subregion names in Spanish. Is that intentional?
+  - Is your reporting period always Oct 31 - Sept 30? I wanted to use the
+    'Date added' column, but it was empty
+  - Is the order of the tables in the yearly update important?
+  - Are we okay with page breaks in the middle of tables?

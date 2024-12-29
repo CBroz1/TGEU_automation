@@ -1,5 +1,5 @@
 % - Document Class -
-\documentclass[12pt]{article} % Set paper size and font size
+\documentclass[11pt]{article} % Set paper size and font size
 
 % - Packages -
 % Import packages: \usepackage[options]{package}
@@ -7,22 +7,20 @@
 % Package imports below are listed with their relevant configuration
 \usepackage[
   a4paper,
-  top=3.5cm,
+  top=2cm,
   bottom=4cm,
   left=2cm,
   right=2cm,
 ]{geometry} % Set margins
-\usepackage[table]{xcolor} % For cell colors
 \usepackage[export]{adjustbox} % For image alignment
 \usepackage{lipsum}
 
 % - Header and Footer -
 % Set page number in footer
 \usepackage{fancyhdr} % import package
-\setlength{\headheight}{1.5cm} % Increase header height if needed
+\setlength{\headheight}{46pt} % Increase header height if needed
 \fancypagestyle{firstpage}{%
     \fancyhf{} % Clear default header/footer
-    \fancyhead[C]{\headlogo} % Centered logo
     \fancyfoot[C]{\footer} % Centered footer
     \renewcommand{\headrulewidth}{0pt} % No header line
     \renewcommand{\footrulewidth}{0pt} % No footer line
@@ -41,17 +39,48 @@
 \usepackage{fontspec} % For custom fonts
 \setmainfont{Lato} % Set font
 
+% - Logo -
+\usepackage{graphicx} % For including images
+\newcommand{\headlogo}{\includegraphics[scale=0.12]{./assets/logo-with-text.png}}
+
+% - Table -
+\usepackage{csvsimple} % For reading CSV files
+\usepackage{array} % For column width adjustments
+\usepackage{cellspace} % For cell padding
+\usepackage{colortbl} % For colored cells
+\usepackage[table]{xcolor} % For cell colors
+\setlength\cellspacetoplimit{4pt}  % Adjust cell padding
+\setlength\cellspacebottomlimit{4pt}  % Adjust cell padding
+\renewcommand{\arraystretch}{1.5} % Adjust row height
+\setlength{\tabcolsep}{8pt} % Adjust cell padding
+\arrayrulecolor{grey}
+
 % Define colors: \definecolor{name}{model}{color-spec}
 \definecolor{purple}{HTML}{8a5fa8}
 \definecolor{grey}{HTML}{e7e3ed}
 \definecolor{white}{HTML}{ffffff}
 \definecolor{black}{HTML}{000000}
 
+
+% - List input CSVs -
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{pgffor} % For looping
+\usepackage{catchfile} % To include dynamic file lists
+\CatchFileDef{\csvlist}{./data/_latex_csv_inputs.txt}{\relax}
+
+% - Get year and total cases -
+\usepackage{datetime}
+\newcommand{\ThisYear}{\the\year}
+\newcommand{\LastYear}{\the\numexpr\year-1\relax}
+\newcommand{\Total}{\input{./data/_total.txt}}
+
 % - Custom Commands -
 % Define custom commands: \newcommand{name}[num args]{definition}
 % Purple cell sets cell color to purple and text color to white, bold
 % #1 is the first argument passed to the function
 \newcommand{\PCell}[1]{\cellcolor{purple}\textcolor{white}{\textbf{#1}}}
+\newcommand{\WhiteText}[1]{\textcolor{white}{\textbf{#1}}}
 % Purple text sets text color to purple and makes text bold
 % #1 is the first argument passed to the function
 \newcommand{\PurplePlain}[1]{\textcolor{purple}{#1}}
@@ -70,35 +99,6 @@
   }
 }
 
-% - Logo -
-\usepackage{graphicx} % For including images
-\newcommand{\headlogo}{\includegraphics[scale=0.12]{./assets/logo-with-text.png}}
-
-% - Table -
-\usepackage{csvsimple} % For reading CSV files
-\usepackage{array} % For column width adjustments
-\usepackage{cellspace} % For cell padding
-\usepackage{colortbl} % For colored cells
-\setlength\cellspacetoplimit{4pt}  % Adjust cell padding
-\setlength\cellspacebottomlimit{4pt}  % Adjust cell padding
-\renewcommand{\arraystretch}{1.5} % Adjust row height
-\setlength{\tabcolsep}{8pt} % Adjust cell padding
-\arrayrulecolor{grey}
-
-% - Loop inputs -
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{pgffor} % For looping
-\usepackage{catchfile} % To include dynamic file lists
-% \newcommand{\csvlist}{}
-\CatchFileDef{\csvlist}{./data/_latex_csv_inputs.txt}{\relax}
-% % Process the raw list into individual items (split by newline)
-% \newcommand{\processinputlist}{
-%   \forcsvlist{\listadd{\csvlist}}{\rawcsvlist}
-% }
-
-% \newcommand{\csvlist}{\input{./data/_latex_csv_inputs.tex}}
-
 
 % - Document -
 \begin{document}
@@ -106,18 +106,23 @@
 % Apply first-page style
 \thispagestyle{firstpage}
 \begin{center}
-	\vspace*{3cm}
-	{\Huge \PurpleText{Trans Murder Monitoring \\ 2024 Update}}\\[1cm]
-	{\Large Subtitle One}\\[0.5cm]
-	{\Large Subtitle Two}\\[2cm]
+	\headlogo \\
+	\vspace*{4cm}
+	{
+		\fontsize{28}{34}\selectfont \PurpleText{
+			Trans Murder Monitoring \\ \ThisYear \ Update
+		}
+	}\\[2cm]
+	\LARGE \Total reported murders\\
+	\normalsize between 1 October \LastYear\ and 30 September \ThisYear\\[1.5cm]
+	\LARGE \Total aseinatos reportados\\
+	\normalsize  entre 1 octobre \LastYear\ y 30 septiembre \ThisYear
 \end{center}
 \newpage
 
-% Tables
-
-% Include tables from combined CSV files
-\thispagestyle{rest}
+% Include tables from list of csv files, in order
 \foreach \csvfile in \csvlist{
+\thispagestyle{rest}
 \csvloop{
 	file=\csvfile,
 	respect all,
@@ -128,19 +133,47 @@
 				|p{0.4\textwidth}|p{0.4\textwidth}|>{
 				\columncolor[gray]{0.9}\centering\arraybackslash
 				}p{0.05\textwidth}|}
-
-				\toprule
+				\rowcolor{purple}
 				},
 				command={\csviffirstrow
-				{\PCell{\csvcoli} & \PCell{\csvcolii} & \PCell{\csvcoliii}}
-				{\csvcoli         & \csvcolii         & \csvcoliii}
+				{\WhiteText{\csvcoli} & \WhiteText{\csvcolii} & \WhiteText{\csvcoliii}}
+				{\csvcoli             & \csvcolii             & \csvcoliii}
 					},
-				late after line=                                            \\\hline,
-				late after first line=                                      \\\midrule\endhead,
-				late after last line=                                       \\\bottomrule,
+				late after line=                                                        \\* \hline,
+				late after first line=                                                  \\* \hline\endhead,
+				late after last line=                                                   \\\bottomrule,
 				after reading=\end{longtable}
 		}
 }
+
+\newpage
+
+\thispagestyle{rest}
+
+\ThisYear\ data collection was supported by TGEU members, Anna-Jayne Metcalfe \\
+(tdor.translivesmatter.info), and the following partner organisations:
+
+\PurpleText{
+	\begin{itemize}
+		\item Asociación de Derechos Humanos Cozumel Trans (Honduras)
+		\item Asociación Silueta X (Ecuador)
+		\item Association Unity (Togo)
+		\item Caribe afirmativo (Colombia)
+		\item Centro de Apoyo a las Identidades Trans (Mexico)
+		\item HOPE - Have Only Positive Expectations (Pakistan)
+		\item Iranti (South Africa)
+		\item Jinsiangu (Kenya)
+		\item LakanBini Trans Network (The Philippines)
+		\item Observatorio de violaciones a derechos humanos de personas LGTBIQ+ en Nicaragua
+		      (Nicaragua)
+		\item OTRANS Guatemala (Guatemala)
+		\item Rede Trans Brasil (Brazil)
+		\item Red SinViolenciaLGBTI (Latin America and the Caribbean)
+		\item SPoD (Turkey)
+		\item Tranz Network Uganda (Uganda)
+	\end{itemize}
+}
+
 
 \end{document}
 

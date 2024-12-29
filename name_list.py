@@ -91,6 +91,7 @@ class DataPreprocessor:
         _ = self.save_demo_aggs()
         _ = self.save_region_aggs()
         _ = self.write_yearly_inputs_list()
+        _ = self.write_total()
 
     def fuzzy_input(self, input_file):
         """If input file does not exist, check for file with current year."""
@@ -103,7 +104,8 @@ class DataPreprocessor:
 
         def not_a_helper(fp):
             fn = str(fp)  # file string is not a helper csv: options, country
-            if "options" in fn or "opciones" in fn or "ountr" in fn:
+            banned_substrings = ["options", "opciones", "ountr", "lock"]
+            if any(sub in fn for sub in banned_substrings):
                 return False
             return True
 
@@ -392,12 +394,13 @@ class DataPreprocessor:
         return self.agg_df
 
     def save_demo_aggs(self):
-        agg = self.agg_df.applymap(self.sanitize_content).copy()
+        # agg = self.agg_df.applymap(self.sanitize_content).copy()
+        agg = self.agg_df
         table_to_col = {
             "occupation": (  # file suffix
                 "Occupation",  # table column
                 "Occupation/source of income",  # en header
-                r"Ocupaci{\'o}n/fuente de ingreso",  # es header
+                r"Ocupación/fuente de ingreso",  # es header
             ),
             "age": ("Age range", "Age", "Edad"),
             "migrant": (
@@ -409,17 +412,17 @@ class DataPreprocessor:
             "gender": (
                 "Gender identity or expression",
                 "Gender identity or expression",
-                r"Identidad o expresi{\'o}n de g{\'enero}",
+                r"Identidad o expresión de género",
             ),
             "sex": (
                 "Sex Characteristics",
                 "Sex Characteristics",
-                r"Caracter{\'i}sticas sexuales",
+                r"Características sexuales",
             ),
             "orientation": (
                 "Sexual Orientation",
                 "Sexual Orientation",
-                r"Orientaci{\'o}n sexual",
+                r"Orientación sexual",
             ),
             "disablility": ("Disability", "Disability", "Discapacidad"),
             "murder": (
@@ -430,7 +433,7 @@ class DataPreprocessor:
             "location": (
                 "Type of location of the murder",
                 "Type of location of homicide/murder",
-                r"Tipo de ubicaci{\'o}n del asesinato",
+                r"Tipo de ubicación del asesinato",
             ),
         }
         for table, (col, head_en, head_es) in table_to_col.items():
@@ -500,8 +503,38 @@ class DataPreprocessor:
         data_dir = Path("./data/")
         all_ins = chain(data_dir.glob("y*reg*csv"), data_dir.glob("y*demo*csv"))
         with_relpath = [f"./{csv}" for csv in all_ins]
+
+        pref_order = [
+            "Africa",
+            "Asia",
+            "Europe",
+            "NorthAmerica",
+            "Caribbean",
+            "occupation",
+            "age",
+            "migrant",
+            "race",
+            "gender",
+            "sex",
+            "orientation",
+            "disablility",
+            "murder",
+            "location",
+        ]
+        sorted_paths = sorted(
+            with_relpath,  # sort by substrings they contain
+            key=lambda x: next(
+                (i for i, s in enumerate(pref_order) if s in x), len(pref_order)
+            ),
+        )
+
         with open(data_dir / "_latex_csv_inputs.txt", "w") as f:
-            f.write(", \n".join(with_relpath))
+            f.write(", \n".join(sorted_paths))
+
+    def write_total(self):
+        total = len(self.df)
+        with open("./data/_total.txt", "w") as f:
+            f.write(str(total))
 
 
 if __name__ == "__main__":
