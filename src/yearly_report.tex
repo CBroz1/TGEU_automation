@@ -70,10 +70,9 @@
 \CatchFileDef{\csvlist}{./data/_latex_csv_inputs.txt}{\relax}
 
 % - Get year and total cases -
-\usepackage{datetime}
-\newcommand{\ThisYear}{\the\year}
-\newcommand{\LastYear}{\the\numexpr\year-1\relax}
 \newcommand{\Total}{\input{./data/_total.txt}}
+\newcommand{\ThisYear}{\input{./data/_year.txt}}
+\newcommand{\LastYear}{\the\numexpr\year-1\relax}
 
 % - Custom Commands -
 % Define custom commands: \newcommand{name}[num args]{definition}

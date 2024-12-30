@@ -1,4 +1,5 @@
 import random
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -94,9 +95,41 @@ def generate_fake_data(column_name, original_column):
         return original_column
 
 
+def fuzzy_input(input_file):
+    """If input file does not exist, check for file with current year."""
+    input_file = input_file or "not_a_file"  # "data/example_input.csv"
+    path_obj = Path(input_file)
+    if path_obj.exists() and path_obj.is_file():
+        return input_file
+
+    # Defining a subfunction because this is the only place it's used
+
+    def not_a_helper(fp):
+        fn = str(fp)  # file string is not a helper csv: options, country
+        banned_substrings = ["options", "opciones", "ountr", "lock"]
+        if any(sub in fn for sub in banned_substrings):
+            return False
+        return True
+
+    # search for first file in data labeled with current year
+    input_options = [
+        item
+        for item in path_obj.parent.glob("./data/*2024*")
+        if not_a_helper(item)  # exclude options files
+    ]
+
+    if input_options:
+        input_file = input_options[0]
+        print(f"Loading {input_file}")  # warn of change
+        return input_file
+
+    raise FileNotFoundError("Could not find input file in ./data/")
+
+
 if __name__ == "__main__":
     # Load the original dataset
-    original_csv_path = "./data/name_data.csv"
+
+    original_csv_path = fuzzy_input(None)
     original_data = pd.read_csv(original_csv_path)
 
     # Randomize the rows of the orig dataset to keep freq of categorical data

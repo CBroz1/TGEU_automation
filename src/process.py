@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from datetime import datetime
 from functools import cached_property
 from itertools import chain  # For flattening lists of lists
@@ -14,7 +15,7 @@ from pylatexenc.latexencode import utf8tolatex
 load_dotenv()  # Load environment variables from .env file
 
 # By convention, script-level constants are in ALL_CAPS
-THIS_YEAR = datetime.now().year  # Get the current year
+THIS_YEAR = os.getenv("THIS_YEAR")  # Get the current year
 LIMIT_FIRST_N_SOURCES = 14  # Number of sources to keep in the output
 NAMES_FILE = f"./output/{THIS_YEAR}-TMM-Namelist.csv"  # Output name list
 NAMES_OUTPUT_COLUMNS = {  # Columns to keep in the output CSV for name list
@@ -101,6 +102,8 @@ class DataPreprocessor:
         _ = self.save_region_aggs()
         _ = self.write_yearly_inputs_list()
         _ = self.write_total()
+        _ = self.wrangle_tdor_data()
+        _ = self.save_year()
 
     def fuzzy_input(self, input_file):
         """If input file does not exist, check for file with current year."""
@@ -144,6 +147,11 @@ class DataPreprocessor:
         """
         # Sanitize column names: Keep text before the first line break
         self.df.columns = [col.split("\n")[0] for col in self.df.columns]
+        # remove newlines from Name of the "Name of the victim" column
+        if "Name of the victim" in self.df.columns:
+            self.df["Name of the victim"] = self.df[
+                "Name of the victim"
+            ].str.strip("\n")
         # Warn about duplicates
         _ = self.check_duplicates()
         # Create 'ReportAge' column
@@ -151,6 +159,7 @@ class DataPreprocessor:
             _ = self.merge_age_cols()
         else:
             logger.warning("Missing 'Age'/'Age range' columns.")
+
         return self.df
 
     def generate_names_list(self):
@@ -323,7 +332,8 @@ class DataPreprocessor:
                 df_es.reset_index(drop=True),
             ],
             axis=1,
-        )
+        ).dropna(subset=["EN", "ES"])
+
         return ret
 
     def add_cols(self, df, lang="EN"):
@@ -563,44 +573,114 @@ class DataPreprocessor:
         data.to_csv(saved_data, index=False)
         return data
 
-    def wrangle_tdor_data(self):
-        data = self.get_tdor_data()
-
+    @cached_property
+    def age_bounds(self):
         cat = self.categories
         age_ranges = cat[cat["Category_EN"] == "Age range"]["EN"].tolist()
         parsed_ranges = {}
         for age in age_ranges:
-            if " to " in age:
-                parsed_ranges.update({age.split(" to "): age})
+            if isinstance(age, float):  # skip nan
+                continue
+            elif " to " in age:
+                val_range = tuple(map(int, age.split(" to ")))
+                parsed_ranges.update({val_range: age})
             elif "under" in age:
-                parsed_ranges.update({[0, int(age.split(" ")[1])]: age})
+                parsed_ranges.update({(0, int(age.split(" ")[1])): age})
             elif "over" in age:
-                parsed_ranges.update({[int(age.split(" ")[1]), 150]: age})
+                parsed_ranges.update({(int(age.split(" ")[1]), 150): age})
+
+        return parsed_ranges
+
+    @cached_property
+    def cause_cache(self):
+        cat = self.categories
+        causes = set(cat[cat["Category_EN"] == "Type of homicide/murder"]["EN"])
+        cause_cache = {
+            "asphyxiated": "asphyxiation / smoke inhalation / suffocation",
+            "beaten": "beating",
+            "burned": "burning / arson",
+            "burnt alive": "burning / arson",
+            "burnt": "burning / arson",
+            "decapitated": "decapitation / dismemberment",
+            "dismembered": "decapitation / dismemberment",
+            "drowned": "other",
+            "hanged": "strangulation / hanging",
+            "hit and run": "vehicle run-over",
+            "lynched": "other",
+            "murdered": "other",
+            "not reported": "unknown",
+            "pushed down stairs": "other",
+            "raped": "other",
+            "run over": "vehicle run-over",
+            "shot": "shooting",
+            "stabbed": "stabbing",
+            "stoned": "stoning",
+            "strangled": "asphyxiation / smoke inhalation / suffocation",
+            "suffocated": "asphyxiation / smoke inhalation / suffocation",
+            "throat cut": "throat cut",
+            "tortured": "torture",
+        }
+        cause_cache.update({c: c for c in causes})
+        return cause_cache
+
+    def wrangle_tdor_data(self):
+        data = self.get_tdor_data()
+
+        data["name"] = data["name"].replace("Name Unknown", "N. N.")
 
         def match_age_range(age):
-            if "-" in age:  # if tdor has range, check range in parsed_ranges
-                start = match_age_range(age.split("-")[0])
-                end = match_age_range(age.split("-")[1])
+            # if tdor has range, check range in parsed_ranges
+            if isinstance(age, str) and "-" in age:
+                start = match_age_range(int(age.split("-")[0]))
+                end = match_age_range(int(age.split("-")[1]))
                 return start if start == end else None
-            for (start, end), val in parsed_ranges.items():
-                if start <= age <= end:  # if int is in one of our ranges
-                    return val
-            return None
+            elif age == float("nan"):
+                return None
+            try:  # if int is in one of our ranges
+                for (start, end), val in self.age_bounds.items():
+                    if start <= float(age) <= end:
+                        return val
+            except ValueError:
+                return None
 
         data["Age range"] = data["age"].apply(match_age_range)
-        data["Age"] = data["age"].appy(
-            lambda x: int(x) if x.isdigit() else None
-        )
-        data["date"] = pd.to_datetime(data["date"], format="%Y-%m-%d")
-        data["date"] = data["date"].dt.strftime("%d/%m/%Y")
 
-        cause_col = "Type of homicide/murder"
-        causes = cat[cat["Category_EN"] == cause_col]["EN"].tolist()
+        def str_to_int(x):
+            try:
+                return int(x)
+            except ValueError:
+                return None
 
-        def map_cause(tdor_cause):
-            pass
+        data["Age"] = data["age"].apply(str_to_int)
+        data["date"] = pd.to_datetime(
+            data["date"], format="%Y-%m-%d"
+        ).dt.strftime("%d/%m/%Y")
 
-        data[cause_col] = data["cause"].apply(map_cause)
+        def map_cause(tdor_cause, rerun=2):
+            if cause := self.cause_cache.get(tdor_cause):  # if in our mapping
+                return cause
+            for delim in [" and ", " with ", ", "]:  # take first part of mult
+                tdor_cause = tdor_cause.split(delim)[0]
+            if rerun:  # try testing mappings again
+                return map_cause(tdor_cause, rerun=rerun - 1)
+            return None
+
+        data["Type of homicide/murder"] = data["cause"].apply(map_cause)
+
+        def correct_nickname(name):
+            """Move parenthetical nickname to after first"""
+            # Regex to match the format: first last ("parenth1", "parenth2")
+            pattern = r'(\w+)\s+(.+?)\s+\((".*?")(?:,\s+".*?")?\)'
+            match = re.match(pattern, name)
+            if match:
+                first, last, nick = match.groups()
+                if last:
+                    last = f" {last}"
+                return f"{first} {nick}{last}"
+            return name
+
+        data["name"] = data["name"].apply(correct_nickname)
+
         data = data.rename(
             columns={
                 "date_created": "Date added",
@@ -611,11 +691,55 @@ class DataPreprocessor:
             }
         )
 
+        name_col = "Name of the victim"
+        data = data[~data[name_col].isin(self.df[name_col])]
+
+        if len(data) > 0:
+            slice = data[[name_col, "Date of the murder dd/mm/yyyy"]]
+            logger.warning(f"TDOR has {len(data)} names not in master\n{slice}")
+
+        data = data.drop(
+            columns=[
+                "uid",
+                "age",
+                "birthdate",
+                "has_photo",
+                "thumbnail_url",
+                "source_ref",
+                "country_code",
+                "latitude",
+                "longitude",
+                "category",
+                "cause",
+                "permalink",
+                "qrcode_url",
+                "date_updated",
+            ]
+        )
+
+        aligned = pd.DataFrame(
+            {
+                col: (
+                    data[col]
+                    if col in data
+                    else pd.Series(dtype=self.df[col].dtype)
+                )
+                for col in self.df.columns
+            }
+        )
+        aligned.to_csv("./data/tdor_wrangled.csv")
+
         self.tdor = data
+
         return data
+
+    def save_year(self):
+        with open("./data/_year.txt", "w") as f:
+            f.write(THIS_YEAR)
 
 
 if __name__ == "__main__":
     """Run this when called directly as `python name_list.py`."""
     pp = DataPreprocessor()
-    agg = pp.agg_df
+    df = pp.df
+    tdor = pp.tdor

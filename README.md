@@ -19,7 +19,8 @@ Automation tools to support data processing for [TGEU](tgeu.org).
     LaTeX converts the latter into a pdf:
   - `./output/{YEAR}-TMM-Namelist.csv` - to serve as the 'long' list
   - `./data/name_data_sanitized.csv` - so serve as input for the name list pdf
-  - `./output/{YEAR}-TMM-Namelist.pdf` - the final pdf
+  - `./output/{YEAR}-TMM-Namelist.pdf` - the final pdf with each region
+    and demographic subtable.[^2]
 - **Yearly update**: Python uses the master list and the countries catalog to
     generate several output tables followed by the yearly update pdf:
   - `./data/yearly-region-{region}.csv` where each region is one of: Asia,
@@ -30,10 +31,12 @@ Automation tools to support data processing for [TGEU](tgeu.org).
 
 [^1]: It is assumed that the options are listed in the same order in both
     languages, ignoring country/region columns.
+[^2]: To adjust the order of these tables, run `make list` once, then edit
+    `./data/_latex_csv_order.csv` to your liking, and run `make list` again.
 
 ## Setup
 
-- **Python**: The codebase is written in Python 3.9.6. Install the required
+- **Python**: The codebase is written in Python 3.9.2. Install the required
     packages with `pip install -r requirements.txt`.
 - **LaTeX**: The codebase uses `xelatex` to convert the pdfs, but any LaTeX
   compiler should work.
@@ -41,56 +44,6 @@ Automation tools to support data processing for [TGEU](tgeu.org).
     appropriate values, including
   - your API key for tdor.translivesmatter.info
   - your LaTeX compiler command
-
-## Name list csv to pdf
-
-TODO:
-
-- python:
-  - Why does the total differ?
-- tex
-  - prevent page breaks in the middle of tables
-  - move acknowledgements to seperate file
-- organization
-  - tex work to subdirectory
-  - makefile? python main?
-  - tex namelist should move to `./output/{YEAR}-TMM-Namelist.pdf`
-- env file for user config
-  - latex command
-
-## Email
-
-I spent some time over the holidays working on a first draft of some automation
-tools to generate the name list and yearly update pdfs. This draft is a fully
-Python/LaTeX approach to give me a better understanding of the data flow.
-From here, we can decide which parts to keep, or convert to a purely sheet-based
-solution.
-
-- questions
-  - confirm confidentiality date after today assumption
-  - confirm source count limit in pdf output
-  - ok to publish example data?
-  - logo variant with text
-  - tmm-main-file-TDOR2024:TMM - options - EN:P-Q had a repeat column name
-    that interferes with exporting the CSV. Previously P was empty. I copied
-    the data over from Q to P.
-  - I had to manually add 'Sex characteristics' and '"Sexual orientation"' to
-    the options file.
-  - How likely is it for the options file(s) to change?
-  - My first draft assumed options files were in the same order across
-    languages, but this wasn't the case for coutries/regions.
-    Is this a safe assumption for other columns?
-  - Would we be able to modify the headings on the options files to match the
-    headings on the yearly report?
-  - in the yearly update 'unknown' is often converted to
-    'unknown / not applicable' - is this intentional? should this be done in a
-    pdf i produce?
-  - I noticed inconsistent capitalization of region/subregion names in Spanish. Is that intentional?
-  - Is your reporting period always Oct 31 - Sept 30? I wanted to use the
-    'Date added' column, but it was empty
-  - Are we okay with page breaks in the middle of tables?
-  - for the data fetched from Anna-Jayne's database:
-    - how do you handle missingess in your reported categories
-        (e.g., race, migration status)? Is this something you're looking up
-        after the fact?
-    - her age ranges don't match yours (e.g., her 23-25 vs your 19-25) -
+  - the year for the data you're processing
+- **Running**: The `Makefile` will allow you to run the entire process with
+    `make both`, or `make list` and `make report` for the individual steps.
