@@ -1,0 +1,244 @@
+Region_EN,Region_ES,Subregion_EN,Subregion_ES,Country_EN,Country_ES
+Africa,África,Central Africa,África Central,Angola,Angola
+,,,,Cameroon,Camerún
+,,,,Central African Republic,República Centroafricana
+,,,,Chad,Chad
+,,,,Democratic Republic of the Congo,República Democrática del Congo
+,,,,Equatorial Guinea,Guinea Ecuatorial
+,,,,Gabon,Gabón
+,,,,Republic of the Congo,República del Congo
+,,,,Sao Tome and Principe,Santo Tomé y Príncipe
+,,East Africa,África Oriental,Burundi,Burundi
+,,,,Comoros,Comoras
+,,,,Djibouti,Yibuti
+,,,,Eritrea,Eritrea
+,,,,Ethiopia,Etiopía
+,,,,Kenya,Kenia
+,,,,Madagascar,Madagascar
+,,,,Malawi,Malaui
+,,,,Mauritius,Mauricio
+,,,,Mayotte,Mayotte
+,,,,Mozambique,Mozambique
+,,,,Reunion,Reunión
+,,,,Rwanda,Ruanda
+,,,,Seychelles,Seychelles
+,,,,Somalia,Somalia
+,,,,South Sudan,Sudán del Sur
+,,,,Tanzania,Tanzania
+,,,,Uganda,Uganda
+,,,,Zambia,Zambia
+,,,,Zimbabwe,Zimbabue
+,,North Africa,África del Norte,Algeria,Argelia
+,,,,Egypt,Egipto
+,,,,Libya,Libia
+,,,,Morocco,Marruecos
+,,,,Sudan,Sudán
+,,,,Tunisia,Túnez
+,,,,Western Sahara,Sáhara Occidental
+,,South Africa,África del Sur,Botswana,Botsuana
+,,,,Eswatini,Esuatini
+,,,,Lesotho,Lesoto
+,,,,Namibia,Namibia
+,,,,South Africa,Sudáfrica
+,,West Africa,África occidental,Benin,Benín
+,,,,Burkina Faso,Burkina Faso
+,,,,Cape Verde,Cabo Verde
+,,,,Côte d'Ivoire,Costa de Marfil
+,,,,Gambia,Gambia
+,,,,Ghana,Ghana
+,,,,Guinea,Guinea
+,,,,Guinea-Bissau,Guinea-Bisáu
+,,,,Liberia,Liberia
+,,,,Mali,Malí
+,,,,Mauritania,Mauritania
+,,,,Niger,Níger
+,,,,Nigeria,Nigeria
+,,,,"Saint Helena, Ascension and Tristan da Cunha","Smo. Helena, Ascensión y Tristán da Cunha"
+,,,,Senegal,Senegal
+,,,,Sierra Leone,Sierra Leona
+,,,,Togo,Togo
+Asia,Asia,Central Asia,Asia Central,Kazakhstan,Kazajstán
+,,,,Kyrgyzstan,Kirguistán
+,,,,Tajikistan,Tayikistán
+,,,,Turkmenistan,Turkmenistán
+,,,,Uzbekistan,Uzbekistán
+,,East Asia,Asia meridional,China,China
+,,,,Hong Kong,Hong Kong
+,,,,Japan,Japón
+,,,,Macao,Macao
+,,,,Mongolia,Mongolia
+,,,,North Korea,Corea del Norte
+,,,,South Korea,Corea del Sur
+,,,,Taiwan,Taiwán
+,,South Asia,Asia del Sur,Afghanistan,Afganistán
+,,,,Bangladesh,Bangladesh
+,,,,Bhutan,Bután
+,,,,India,India
+,,,,Iran,Irán
+,,,,Maldives,Maldivas
+,,,,Nepal,Nepal
+,,,,Pakistan,Pakistán
+,,,,Sri Lanka,Sri Lanka
+,,Southeast Asia,Sudeste Asia,Brunei,Brunéi
+,,,,Cambodia,Camboya
+,,,,Indonesia,Indonesia
+,,,,Laos,Laos
+,,,,Malaysia,Malasia
+,,,,Myanmar,Birmania
+,,,,Philippines,Filipinas
+,,,,Singapore,Singapur
+,,,,Thailand,Tailandia
+,,,,Timor-Leste,Timor Oriental
+,,,,Vietnam,Vietnam
+,,West Asia,Asia occidental,Bahrain,Bahréin
+,,,,Iraq,Irak
+,,,,Israel,Israel
+,,,,Jordan,Jordán
+,,,,Kuwait,Kuwait
+,,,,Lebanon,Líbano
+,,,,Oman,Omán
+,,,,Palestine,Palestina
+,,,,Qatar,Katar
+,,,,Saudi Arabia,Arabia Saudita
+,,,,Syria,Siria
+,,,,United Arab Emirates,Árabes Unidos Emiratos Árabes Unidos
+,,,,Yemen,Yemen
+Europe,Europa,East Europe,Europa del Este,Armenia,Armenia
+,,,,Azerbaijan,Azerbaiyán
+,,,,Belarus,Bielorrusia
+,,,,Bulgaria,Bulgaria
+,,,,Cyprus,Chipre
+,,,,Czechia,Chequia
+,,,,Georgia,Georgia
+,,,,Hungary,Hungría
+,,,,Moldova,Moldavia
+,,,,Northern Cyprus ,Chipre del Norte
+,,,,Poland,Polonia
+,,,,Romania,Rumania
+,,,,Russia,Rusia
+,,,,Slovakia,Eslovaquia
+,,,,Turkey,Turquía
+,,,,Ukraine,Ucrania
+,,North Europe,Europa del Norte,Aland Islands,Islas Aland
+,,,,Channel Islands,Islas del Canal
+,,,,Denmark,Dinamarca
+,,,,Estonia,Estonia
+,,,,Faroe Islands,Islas Feroe
+,,,,Finland,Finlandia
+,,,,Greenland,Groenlandia
+,,,,Iceland,Islandia
+,,,,Ireland,Irlanda
+,,,,Isle of Man,Isla de Man
+,,,,Latvia,Letonia
+,,,,Lithuania,Lituania
+,,,,Norway,Noruega
+,,,,Svalbard and Jan Mayen,Svalbard y Jan Mayen
+,,,,Sweden,Suecia
+,,,,Switzerland,Suiza
+,,,,United Kingdom,Reino Unido
+,,South Europe,Europa del Sur,Albania,Albania
+,,,,Andorra,Andorra
+,,,,Bosnia and Herzegovina,Bosnia y Herzegovina Croacia
+,,,,Croatia,Croacia
+,,,,Gibraltar,Gibraltar
+,,,,Greece,Grecia
+,,,,Italy,Italia
+,,,,Kosovo,Kosovo
+,,,,Malta,Malta
+,,,,Montenegro,Montenegro
+,,,,San Marino,San Marino
+,,,,Slovenia,Eslovenia
+,,,,Spain,España
+,,,,Vatican City,Ciudad del Vaticano
+,,,,North Macedonia,Norte Macedonia
+,,,,Portugal,Portugal
+,,,,Serbia,Serbia
+,,West Europe,Europa Occidental,Austria,Austria
+,,,,Belgium,Bélgica
+,,,,France,Francia
+,,,,Germany,Alemania
+,,,,Liechtenstein,Liechtenstein
+,,,,Luxembourg,Luxemburgo
+,,,,Monaco,Mónaco
+,,,,Netherlands,Países Bajos
+Latin America and the Caribbean,América Latina y el Caribe,Caribbean,Caribe,Anguilla,Anguila
+,,,,Antigua and Barbuda,Antigua y Barbuda
+,,,,Aruba,Aruba
+,,,,Bahamas,Bahamas
+,,,,Barbados,Barbados
+,,,,Bermuda,Bermudas
+,,,,British Virgin Islands,Islas Vírgenes Británicas
+,,,,Caribbean Netherlands,Caribe Neerlandés
+,,,,Cayman Islands,Islas Caimán
+,,,,Cuba,Cuba
+,,,,Curaçao,Curazao
+,,,,Dominica,Dominica
+,,,,Dominican Republic,República Dominicana
+,,,,Grenada,Granada
+,,,,Guadeloupe,Guadalupe
+,,,,Haiti,Haití
+,,,,Jamaica,Jamaica
+,,,,Martinique,Martinica
+,,,,Montserrat,Montserrat
+,,,,Puerto Rico,Puerto Rico
+,,,,Saint Barthélemy,San Bartolomé
+,,,,Saint Kitts and Nevis,San Cristóbal y Nieves
+,,,,Saint Lucia,Santa Lucía
+,,,,Saint Martin (French part),San Martín ( Parte francesa)
+,,,,Saint Vincent and the Grenadines,San Vicente y las Granadinas
+,,,,Sint Maarten (Dutch part),Sint Maarten (parte holandesa)
+,,,,Trinidad and Tobago,Trinidad y Tobago
+,,,,Turks and Caicos Islands,Islas Turcas y Caicos
+,,,,United States Virgin Islands,Islas Vírgenes de los Estados Unidos
+,,Central America,América Central,Belize,Belice
+,,,,Costa Rica,Costa Rica
+,,,,El Salvador,El Salvador el Salvador
+,,,,Guatemala,Guatemala
+,,,,Honduras,Honduras
+,,,,Mexico,México
+,,,,Nicaragua,Nicaragua
+,,,,Panama,Panamá
+,,South America,América del Sur,Argentina,Argentina
+,,,,Bolivia,bolivia
+,,,,Brazil,Brasil
+,,,,Chile,Chile
+,,,,Colombia,Colombia
+,,,,Ecuador,Ecuador
+,,,,Falkland Islands (Malvinas),Islas Malvinas (Falkland)
+,,,,French Guiana,Guayana Francesa
+,,,,Guyana,Guayana
+,,,,Paraguay,Paraguay
+,,,,Peru,Perú
+,,,,Suriname,Surinam
+,,,,Uruguay,Uruguay
+,,,,Venezuela,Venezuela
+North America,América del Norte,North America,América del Norte,Canada,Canadá
+,,,,Saint Pierre and Miquelon,San Pedro y Miquelón
+,,,,United States,Estados Unidos
+Oceania,Oceanía,Australia and New Zealand,Australia y Nueva Zelanda,Australia,Australia
+,,,,Christmas Island,Isla de Navidad
+,,,,Cocos (Keeling) Islands,Islas Cocos (Keeling)
+,,,,New Zealand,Nueva Zelanda
+,,,,Norfolk Island,Isla Norfolk
+,,Melanesia,Melanesia,Fiji,Fiyi
+,,,,Papua New Guinea,Papúa Nueva Guinea
+,,,,Solomon Islands,Islas Salomón
+,,,,Vanuatu,Vanuatu
+,,Micronesia,Micronesia,Federated States of Micronesia,Estados Federados de Micronesia
+,,,,Guam,Guam
+,,,,Kiribati,Kiribati
+,,,,Marshall Islands,Islas Marshall
+,,,,Nauru,Nauru
+,,,,New Caledonia,Nueva Caledonia
+,,,,Northern Mariana Islands,Islas Marianas del Norte
+,,,,Palau,Palaos
+,,Polynesia,Polinesia,American Samoa,Samoa Americana
+,,,,Cook Islands,Islas Cook
+,,,,French Polynesia,Polinesia Francesa
+,,,,Niue,Niue
+,,,,Pitcairn Islands,Islas Pitcairn
+,,,,Samoa,Samoa
+,,,,Tokelau,Tokelau
+,,,,Tonga,Tonga
+,,,,Tuvalu,Tuvalu
+,,,,Wallis and Futuna,Wallis y Futuna

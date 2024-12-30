@@ -6,16 +6,17 @@
 
 # Ignore files that begin with 'temp'
 temp*
-# Ignore all files in the data directory
-data/*
-# Ignore all files in the output directory
-output/*
+# Ignore files in the data directory
+data/*.csv
+data/*.txt
 # Ignore all pdf and csv files
 *.pdf
 *.csv
 # Allow csv/pdfs that begin with 'example'
 !example*.pdf
 !example*.csv
+# Allow country_catalog.csv
+!country_catalog.csv
 
 # -- Python --
 

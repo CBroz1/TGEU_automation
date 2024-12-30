@@ -4,13 +4,17 @@ Automation tools to support data processing for [TGEU](tgeu.org).
 
 ## Data Flow
 
-- **Input Data**: In google sheets, click `File` -> `Download` ->
+- **Input Data**: The codebase relies on user-saved data, and one static file.
+  - **User Saved**: In google sheets, click `File` -> `Download` ->
     `Comma-separated values (.csv)` for each of the following, and save to
     `data/`:
-  - `TMM - {YEAR} - WRITE HERE - EN`, hereafter as 'master'
-  - `tmm-main-file ... Countries catalog`
-  - `TMM - options - EN`[^1]
-  - `TMM - opciones - ES`[^1]
+    - `TMM - {YEAR} - WRITE HERE - EN`, hereafter as 'master'
+    - `TMM - options - EN`[^1]
+    - `TMM - opciones - ES`[^1]
+  - **User written**: `./data/acknowledgements.tex` is a LaTeX file with the
+    acknowledgements for the yearly update pdf.
+  - **Static**: The countries catalog (`./data/country_catalog.csv`) is a
+        static file with English and Spanish names for countries and regions.
 - **Name List**: Python converts the master list into two output files, and
     LaTeX converts the latter into a pdf:
   - `./output/{YEAR}-TMM-Namelist.csv` - to serve as the 'long' list
@@ -27,6 +31,17 @@ Automation tools to support data processing for [TGEU](tgeu.org).
 [^1]: It is assumed that the options are listed in the same order in both
     languages, ignoring country/region columns.
 
+## Setup
+
+- **Python**: The codebase is written in Python 3.9.6. Install the required
+    packages with `pip install -r requirements.txt`.
+- **LaTeX**: The codebase uses `xelatex` to convert the pdfs, but any LaTeX
+  compiler should work.
+- **env**: You'll need to copy `example.env` to `.env` and fill in the
+    appropriate values, including
+  - your API key for tdor.translivesmatter.info
+  - your LaTeX compiler command
+
 ## Name list csv to pdf
 
 TODO:
@@ -42,7 +57,15 @@ TODO:
   - tex namelist should move to `./output/{YEAR}-TMM-Namelist.pdf`
 - env file for user config
   - latex command
-  - year - assume from input file name?
+
+## Email
+
+I spent some time over the holidays working on a first draft of some automation
+tools to generate the name list and yearly update pdfs. This draft is a fully
+Python/LaTeX approach to give me a better understanding of the data flow.
+From here, we can decide which parts to keep, or convert to a purely sheet-based
+solution.
+
 - questions
   - confirm confidentiality date after today assumption
   - confirm source count limit in pdf output
@@ -65,5 +88,9 @@ TODO:
   - I noticed inconsistent capitalization of region/subregion names in Spanish. Is that intentional?
   - Is your reporting period always Oct 31 - Sept 30? I wanted to use the
     'Date added' column, but it was empty
-  - Is the order of the tables in the yearly update important?
   - Are we okay with page breaks in the middle of tables?
+  - for the data fetched from Anna-Jayne's database:
+    - how do you handle missingess in your reported categories
+        (e.g., race, migration status)? Is this something you're looking up
+        after the fact?
+    - her age ranges don't match yours (e.g., her 23-25 vs your 19-25) -

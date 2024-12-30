@@ -1,11 +1,17 @@
 import logging
+import os
 from datetime import datetime
+from functools import cached_property
 from itertools import chain  # For flattening lists of lists
 from pathlib import Path
 
 import pandas as pd
+import requests
 from dateutil.parser import parse
+from dotenv import load_dotenv
 from pylatexenc.latexencode import utf8tolatex
+
+load_dotenv()  # Load environment variables from .env file
 
 # By convention, script-level constants are in ALL_CAPS
 THIS_YEAR = datetime.now().year  # Get the current year
@@ -25,6 +31,9 @@ NAMES_OUTPUT_COLUMNS = {  # Columns to keep in the output CSV for name list
     "Reported by": "Reported by",
     "Link to source of information": "Sources",
 }
+TDOR_API_KEY = os.getenv("TDOR_API_KEY")
+TDOR_URL = "https://tdor.translivesmatter.info/api/v1/reports"
+
 
 # Logging - more informative than `print` with timestamps
 logger = logging.getLogger(__name__.split(".")[0])
@@ -296,7 +305,7 @@ class DataPreprocessor:
             x = x.replace(token, replaced)
         return x
 
-    @property
+    @cached_property  # Cache the result of this function for future calls
     def categories(self):
         df_en = self.load_category_df(version="en")
         df_es = self.load_category_df(version="es")
@@ -385,9 +394,6 @@ class DataPreprocessor:
         result = df_merged.groupby(
             ["Category_EN", "Category_ES", "EN", "ES"], as_index=False
         ).size()
-
-        self.temp_df = df
-        self.long = df_long
 
         self.agg_df = result.rename(columns={"size": "Count"})
 
@@ -535,6 +541,78 @@ class DataPreprocessor:
         total = len(self.df)
         with open("./data/_total.txt", "w") as f:
             f.write(str(total))
+
+    def get_tdor_data(self, from_date=None, to_date=None, category="violence"):
+        saved_data = f"./data/tdor_{THIS_YEAR}.csv"
+        if os.path.exists(saved_data):
+            return pd.read_csv(saved_data)
+        if not TDOR_API_KEY:
+            raise RuntimeError("Count not find an api key for tdor")
+        if not from_date:
+            from_date = f"{THIS_YEAR-1}-10-01"
+        if not to_date:
+            to_date = f"{THIS_YEAR}-09-30"
+        url = (
+            f"{TDOR_URL}?key={TDOR_API_KEY}&category={category}"
+            + f"&from={from_date}&to={to_date}"
+        )
+        request = requests.get(url)
+        if request.status_code != 200:
+            raise Exception("Failed to fetch TDOR data")
+        data = pd.DataFrame(request.json()["data"]["reports"])
+        data.to_csv(saved_data, index=False)
+        return data
+
+    def wrangle_tdor_data(self):
+        data = self.get_tdor_data()
+
+        cat = self.categories
+        age_ranges = cat[cat["Category_EN"] == "Age range"]["EN"].tolist()
+        parsed_ranges = {}
+        for age in age_ranges:
+            if " to " in age:
+                parsed_ranges.update({age.split(" to "): age})
+            elif "under" in age:
+                parsed_ranges.update({[0, int(age.split(" ")[1])]: age})
+            elif "over" in age:
+                parsed_ranges.update({[int(age.split(" ")[1]), 150]: age})
+
+        def match_age_range(age):
+            if "-" in age:  # if tdor has range, check range in parsed_ranges
+                start = match_age_range(age.split("-")[0])
+                end = match_age_range(age.split("-")[1])
+                return start if start == end else None
+            for (start, end), val in parsed_ranges.items():
+                if start <= age <= end:  # if int is in one of our ranges
+                    return val
+            return None
+
+        data["Age range"] = data["age"].apply(match_age_range)
+        data["Age"] = data["age"].appy(
+            lambda x: int(x) if x.isdigit() else None
+        )
+        data["date"] = pd.to_datetime(data["date"], format="%Y-%m-%d")
+        data["date"] = data["date"].dt.strftime("%d/%m/%Y")
+
+        cause_col = "Type of homicide/murder"
+        causes = cat[cat["Category_EN"] == cause_col]["EN"].tolist()
+
+        def map_cause(tdor_cause):
+            pass
+
+        data[cause_col] = data["cause"].apply(map_cause)
+        data = data.rename(
+            columns={
+                "date_created": "Date added",
+                "country": "Country/territory of the murder",
+                "location": "City",
+                "date": "Date of the murder dd/mm/yyyy",
+                "name": "Name of the victim",
+            }
+        )
+
+        self.tdor = data
+        return data
 
 
 if __name__ == "__main__":
