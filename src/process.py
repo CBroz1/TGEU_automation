@@ -183,7 +183,7 @@ class DataPreprocessor:
 
         # Drop unnecessary columns
         self.names_df = self.names_df[list(NAMES_OUTPUT_COLUMNS.keys())]
-        self.names_df.rename(columns=NAMES_OUTPUT_COLUMNS, inplace=True)
+        self.names_df = self.names_df.rename(columns=NAMES_OUTPUT_COLUMNS)
 
         # Save as 'long' format before sanitizing content
         logger.info(f"Saving names data to {NAMES_FILE}")
@@ -214,13 +214,13 @@ class DataPreprocessor:
         logger.warning(f"Found duplicates name/date:\n{dupes}")
 
     def filter_confidential(self):
-        """Drop confidential rows and columns.
+        """Drop confidential rows and columns in names list.
 
         Drop columns marked as 'private': Legal name and sex assigned at birth.
         Drop rows where 'Confidential' is 'Yes' or a future date.
         """
-        drop_cols = [c for c in self.df.columns if "private" in c.lower()]
-        df = self.df.drop(columns=drop_cols)
+        drop_cols = [c for c in self.names_df.columns if "private" in c.lower()]
+        df = self.names_df.drop(columns=drop_cols)
 
         today = datetime.today().date()
 
@@ -234,9 +234,10 @@ class DataPreprocessor:
             except (ValueError, TypeError):
                 return True  # Keep wher data is not a date
 
-        self.df = df[df["Confidential case"].apply(is_confidential)]
+        df = df[df["Confidential case"].apply(is_confidential)]
+        self.names_df = df
 
-        return self.df
+        return self.names_df
 
     def merge_age_cols(self):
         """Create 'ReportAge' column based on 'Age' and 'Age range'."""
