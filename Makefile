@@ -37,4 +37,5 @@ $(OUTPUT_DIR)/$(THIS_YEAR)-TMM-Report.pdf: $(SRC_DIR)/yearly_report.tex $(TOTAL_
 clean:
 	@echo "Cleaning up..."
 	@rm -f $(SRC_DIR)/*.aux $(SRC_DIR)/*.log $(SRC_DIR)/*.pdf $(SRC_DIR)/*.out
+	@rm -f $(TOTAL_FILE)
 

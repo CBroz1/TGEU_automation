@@ -1,23 +1,30 @@
-import logging
-import os
+"""Preprocesses the input CSV file(s) to make LaTeX-compatible."""
+
+# Standard library imports
+import json
 import re
-from datetime import datetime
 from functools import cached_property
 from itertools import chain  # For flattening lists of lists
-from pathlib import Path
+from pathlib import Path  # For handling file paths
 
 import pandas as pd
-import requests
-from dateutil.parser import parse
-from dotenv import load_dotenv
+from dotenv import dotenv_values
+from numpy import nan as np_nan
 from pylatexenc.latexencode import utf8tolatex
+from requests import get as requests_get
 
-load_dotenv()  # Load environment variables from .env file
+# Relative imports from other files in the project
+from src.logger import logger
+from src.utils import item_has_substr
 
 # By convention, script-level constants are in ALL_CAPS
-THIS_YEAR = os.getenv("THIS_YEAR")  # Get the current year
-LIMIT_FIRST_N_SOURCES = 14  # Number of sources to keep in the output
-NAMES_FILE = f"./output/{THIS_YEAR}-TMM-Namelist.csv"  # Output name list
+ENV = dotenv_values(".env")  # Load environment variables from .env files
+THIS_YEAR = ENV.get("THIS_YEAR")  # Get the current year
+TDOR_API_KEY = ENV.get("TDOR_API_KEY")
+TDOR_URL = ENV.get("TDOR_URL")
+LIMIT_FIRST_N_SOURCES = ENV.get("LIMIT_FIRST_N_SOURCES", 14)  # Limit Sources
+NAMES_FILE = ENV.get("NAMES_FILE", f"./output/{THIS_YEAR}-TMM-Namelist.csv")
+
 NAMES_OUTPUT_COLUMNS = {  # Columns to keep in the output CSV for name list
     "Name of the victim": "Name",
     "ReportAge": "Age",
@@ -32,20 +39,44 @@ NAMES_OUTPUT_COLUMNS = {  # Columns to keep in the output CSV for name list
     "Reported by": "Reported by",
     "Link to source of information": "Sources",
 }
-TDOR_API_KEY = os.getenv("TDOR_API_KEY")
-TDOR_URL = "https://tdor.translivesmatter.info/api/v1/reports"
 
 
-# Logging - more informative than `print` with timestamps
-logger = logging.getLogger(__name__.split(".")[0])
-stream_handler = logging.StreamHandler()  # default handler
-stream_handler.setFormatter(
-    logging.Formatter(
-        "[%(asctime)s %(levelname)-8s]: %(message)s",
-        "%M:%S",
-    )
-)
-logger.handlers = [stream_handler]
+class UwaziData:
+    def __init__(
+        self, url: str = None, username: str = None, password: str = None
+    ):
+        self._session = None
+        self.url = url or "https://" + ENV.get("UWAZI_URL") + "/api/"
+        username = username or ENV.get("UWAZI_USER")
+        password = password or ENV.get("UWAZI_PASS")
+        self.login_dict = dict(username=username, password=password)
+
+        self.translations = self.fetch("translations")
+        self.dictionaries = self.fetch("dictionaries")
+        self.data = self.fetch("data")
+
+    def fetch(self, name):
+        if ret := self.load_local(name):
+            return ret
+        return self.session.get(self.url + name).json()
+
+    @property
+    def session(self):
+        if self._session:
+            return self.session
+        self._session = requests.Session()
+        login = self.session.post(self.url + "login", json=self.login_dict)
+        if self.login.status_code != 200:
+            raise RuntimeError(f"Uwazi login issue: {self.login.text}")
+
+        return self._session
+
+    def load_local(self, name):
+        path = Path(f"./data/uwazi_{name}.json")
+        if not path.exists():
+            return None
+        with open(path, "r") as f:
+            return json.load(f)
 
 
 class DataPreprocessor:
@@ -63,7 +94,7 @@ class DataPreprocessor:
         unknown ages are replaced by the 'Age range'.
     4. Limits sources to first N items, where n in LIMIT_FIRST_N_SOURCES above.
     5. Drop unnecessary columns, only preserving OUTPUT_COLUMNS above.
-    6. Remap special characaters for LaTeX
+    6. Remap special characters for LaTeX
 
     Parameters:
     -----------
@@ -87,8 +118,8 @@ class DataPreprocessor:
             for debugging issues with specific rows. If None, will process the
             entire input file.
         """
-        self.df = pd.read_csv(self.fuzzy_input(input_file))
-        self.names_df = None  # Initialize names_df as None, set by preproc func
+        self.df = pd.read_csv(self.find_input_data(input_file))
+        self.names_df = None  # Initialize names_df as None
         self.agg_df = None  # Initialize aggregate DataFrame as None
 
         if debug_window:
@@ -99,33 +130,29 @@ class DataPreprocessor:
         _ = self.generate_names_list()
         _ = self.generate_aggregate()
         _ = self.save_demo_aggs()
-        _ = self.save_region_aggs()
-        _ = self.write_yearly_inputs_list()
-        _ = self.write_total()
-        _ = self.wrangle_tdor_data()
-        _ = self.save_year()
+        # _ = self.save_region_aggs()
+        # _ = self.write_yearly_inputs_list()
+        # _ = self.write_total()
+        # _ = self.wrangle_tdor_data()
+        # _ = self.save_year()
 
-    def fuzzy_input(self, input_file):
+    @property  # Allows calling `DataPreprocessor.data` without parentheses
+    def data(self) -> pd.DataFrame:
+        return self.df  # Return the processed DataFrame
+
+    def find_input_data(self, input_file=None):
         """If input file does not exist, check for file with current year."""
         input_file = input_file or "not_a_file"  # "data/example_input.csv"
         path_obj = Path(input_file)
         if path_obj.exists() and path_obj.is_file():
             return input_file
 
-        # Defining a subfunction because this is the only place it's used
-
-        def not_a_helper(fp):
-            fn = str(fp)  # file string is not a helper csv: options, country
-            banned_substrings = ["options", "opciones", "ountr", "lock"]
-            if any(sub in fn for sub in banned_substrings):
-                return False
-            return True
-
         # search for first file in data labeled with current year
+        banned_substrings = ["options", "opciones", "ountr", "lock"]
         input_options = [
-            item
+            item  # exclude options files
             for item in path_obj.parent.glob(f"./data/*{THIS_YEAR}*")
-            if not_a_helper(item)  # exclude options files
+            if not item_has_substr(item, banned_substrings)
         ]
 
         if input_options:
@@ -135,10 +162,6 @@ class DataPreprocessor:
 
         raise FileNotFoundError("Could not find input file in ./data/")
 
-    @property  # Allows calling `DataPreprocessor.data` without parentheses
-    def data(self) -> pd.DataFrame:
-        return self.df  # Return the processed DataFrame
-
     def preprocess_csv(self):
         """Preprocess the input CSV file.
 
@@ -146,19 +169,15 @@ class DataPreprocessor:
         2. Generates a 'ReportAge' column based on 'Age' and 'Age range'.
         """
         # Sanitize column names: Keep text before the first line break
-        self.df.columns = [col.split("\n")[0] for col in self.df.columns]
-        # remove newlines from Name of the "Name of the victim" column
-        if "Name of the victim" in self.df.columns:
-            self.df["Name of the victim"] = self.df[
-                "Name of the victim"
-            ].str.strip("\n")
+        self.df.columns = [
+            col.split("\n")[0].strip("\n") for col in self.df.columns
+        ]
+
         # Warn about duplicates
-        _ = self.check_duplicates()
+        _ = self.check_duplicates(self.df)
+
         # Create 'ReportAge' column
-        if "Age" in self.df.columns and "Age range" in self.df.columns:
-            _ = self.merge_age_cols()
-        else:
-            logger.warning("Missing 'Age'/'Age range' columns.")
+        self.df["ReportAge"] = self.merge_age_cols(self.df)
 
         return self.df
 
@@ -170,14 +189,15 @@ class DataPreprocessor:
         1. Drop rows where 'Confidental' is 'Yes' or a future date.
         2. Limits sources to first N items, where n in LIMIT_FIRST_N_SOURCES.
         3. Drop unnecessary columns, only preserving OUTPUT_COLUMNS.
-        4. Remap special characaters for LaTeX.
+        4. Remap special characters for LaTeX.
         """
         # Separate dataset for names list
         self.names_df = self.df.copy()  # Save a copy of the DataFrame
+        # saving copies prevents memory maps impacting the original data
 
         # Handle 'Confidential' column filtering
         if "Confidential case" in self.names_df.columns:
-            _ = self.filter_confidential()  # `_ =` says 'return val not used'
+            self.names_df = self.filter_confidential(self.names_df)
         else:
             logger.warning("Found no 'Confidential' column to filter.")
 
@@ -189,10 +209,7 @@ class DataPreprocessor:
         logger.info(f"Saving names data to {NAMES_FILE}")
         self.names_df.to_csv(NAMES_FILE, index=False)
 
-        if "Sources" in self.names_df.columns:
-            _ = self.truncate_sources()
-        else:
-            logger.warning("Missing Sources column.")
+        self.names_df["Sources"] = self.truncate_sources(self.names_df)
 
         # Sanitize content for LaTeX compatibility across all columns
         self.names_df = self.names_df.applymap(self.sanitize_content)
@@ -200,47 +217,31 @@ class DataPreprocessor:
 
         return self.names_df
 
-    def check_duplicates(self):
+    def check_duplicates(
+        self,
+        df: pd.DataFrame = None,
+        col_substrings: list = ["Name of ", "Date of ", "City"],
+    ) -> None:
         """Check for duplicates in the DataFrame."""
+
         check_cols = [
-            col
-            for col in self.df.columns  # check dupes with same name & date
-            if "Name of " in col or "Date of " in col
+            col  # Reduce df to cols matching substrings
+            for col in df.columns
+            if item_has_substr(col, col_substrings)
         ]
-        duplicates = self.df.duplicated(subset=check_cols, keep=False)
+        duplicates = df.duplicated(subset=check_cols, keep=False)
         if not duplicates.any():
             return
-        dupes = self.df[duplicates][check_cols]
+        dupes = df[duplicates][check_cols]
         logger.warning(f"Found duplicates name/date:\n{dupes}")
 
-    def filter_confidential(self):
-        """Drop confidential rows and columns in names list.
-
-        Drop columns marked as 'private': Legal name and sex assigned at birth.
-        Drop rows where 'Confidential' is 'Yes' or a future date.
-        """
-        drop_cols = [c for c in self.names_df.columns if "private" in c.lower()]
-        df = self.names_df.drop(columns=drop_cols)
-
-        today = datetime.today().date()
-
-        def is_confidential(value):
-            """Return True if the row should be kept, False otherwise."""
-            try:
-                if str(value).strip().lower() == "yes":  # Check for 'Yes'
-                    return False
-                date_value = parse(value, fuzzy=True).date()
-                return date_value <= today  # False if future date
-            except (ValueError, TypeError):
-                return True  # Keep wher data is not a date
-
-        df = df[df["Confidential case"].apply(is_confidential)]
-        self.names_df = df
-
-        return self.names_df
-
-    def merge_age_cols(self):
+    def merge_age_cols(self, df: pd.DataFrame) -> pd.Series:
         """Create 'ReportAge' column based on 'Age' and 'Age range'."""
+
+        required_cols = ["Age", "Age range"]
+        if not all(col in df.columns for col in required_cols):
+            logger.warning(f"Missing columns: {required_cols}")
+            return pd.Series(np_nan, index=df.index)  # Return NaNs
 
         def calculate_report_age(row):
             try:  # 'try' block will catch errors and default to 'Age range'
@@ -249,10 +250,52 @@ class DataPreprocessor:
             except (ValueError, TypeError):  # if not valid number, use range
                 return row["Age range"]
 
-        self.df["ReportAge"] = self.df.apply(calculate_report_age, axis=1)
-        return self.df
+        return df.apply(calculate_report_age, axis=1)
 
-    def truncate_sources(self, n: int = LIMIT_FIRST_N_SOURCES):
+    def filter_confidential(
+        self, df: pd.DataFrame, confidential_col: str = "Confidential case"
+    ) -> pd.DataFrame:
+        """Drop confidential rows and columns in names list.
+
+        Drop columns marked as 'private': Legal name and sex assigned at birth.
+        Drop rows where 'Confidential' is 'Yes' or similar.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            DataFrame to filter confidential rows from.
+        confidential_col : str
+            Name of the column containing the confidential indicator.
+        """
+        drop_cols = [c for c in self.names_df.columns if "private" in c.lower()]
+        df = self.names_df.drop(columns=drop_cols)
+
+        if confidential_col not in df.columns:
+            logger.warning(f"Missing {confidential_col} column.")
+            return df
+
+        conf_indicators = [
+            "yes",
+            "confidential",
+            "private",
+            "si",
+            "confidencial",
+            "privado",
+            "sí",
+        ]
+
+        def not_confidential(value) -> bool:
+            """Return True if the row should be kept, False otherwise."""
+            return not str(value).strip().lower() in conf_indicators
+
+        return df[df["Confidential case"].apply(not_confidential)]
+
+    def truncate_sources(
+        self,
+        df: pd.DataFrame,
+        source_col: str = "Sources",
+        limit_n: int = LIMIT_FIRST_N_SOURCES,
+    ) -> pd.Series:
         """Truncate the 'Sources' column to the first N sources.
 
         LaTeX will overfill the page if there are too many sources.
@@ -265,16 +308,17 @@ class DataPreprocessor:
             Number of sources to keep in the output.
             Default is LIMIT_FIRST_N_SOURCES.
         """
+        if source_col not in df.columns:
+            logger.warning(f"Missing {source_col} column.")
+            return pd.Series(np_nan, index=df.index)  # Return NaNs
 
         def trunc_n_lines(content):
             """Return the first N lines of the content."""
             if not isinstance(content, str):
                 return content
-            return "\n".join(content.split("\n")[:n])
+            return "\n".join(content.split("\n")[: int(limit_n)])
 
-        self.names_df["Sources"] = self.names_df["Sources"].apply(trunc_n_lines)
-
-        return self.df
+        return df[source_col].apply(trunc_n_lines)
 
     def replace_quotes(self, text):
         """Replaces straight double quotes with contextual LaTeX quotes.
@@ -301,7 +345,7 @@ class DataPreprocessor:
         if not isinstance(x, str):
             return x
 
-        x = x.replace("\u200B", "")  # Remove zero-width spaces
+        x = x.replace("\u200b", "")  # Remove zero-width spaces
         x = x.strip("\n")  # Remove newline at the beginning and end
         x = self.replace_quotes(x)  # Replace quotes with LaTeX equiv
         x = utf8tolatex(str(x))
@@ -320,9 +364,6 @@ class DataPreprocessor:
         df_en = self.load_category_df(version="en")
         df_es = self.load_category_df(version="es")
 
-        df_en = self.add_cols(df_en, "EN")
-        df_es = self.add_cols(df_es, "ES")
-
         df_en = df_en.melt(var_name="Category_EN", value_name="EN")
         df_es = df_es.melt(var_name="Category_ES", value_name="ES")
 
@@ -336,32 +377,6 @@ class DataPreprocessor:
         ).dropna(subset=["EN", "ES"])
 
         return ret
-
-    def add_cols(self, df, lang="EN"):
-        unknown = "unknown" if lang == "EN" else "desconocido"
-        orient = [
-            "heterosexual",
-            "queer",
-            "gay/lesbian",
-            "pansexual",
-            unknown,
-        ]
-        content = {
-            "EN": {
-                "Sex Characteristics": ["endosex", "intersex", unknown],
-                "Sexual Orientation": orient,
-                "Disability": ["yes", "no", unknown],
-            },
-            "ES": {
-                "Características sexuales": ["endosex", "intersex", unknown],
-                "Orientación sexual": orient,
-                "Discapacidad": ["sí", "no", unknown],
-            },
-        }
-        for col, vals in content[lang].items():
-            df[col] = None  # Initialize column with None
-            df.iloc[0 : len(vals), -1] = vals  # Fill in the values
-        return df
 
     def load_category_df(self, version: str):
         substr = "options" if version == "en" else "opciones"
@@ -456,7 +471,7 @@ class DataPreprocessor:
         for table, (col, head_en, head_es) in table_to_col.items():
             sub_df = agg[agg["Category_EN"] == col]  # get the aggregated col
             if sub_df.empty:
-                logging.warning(f"Problem saving {table}")
+                logger.warning(f"Problem saving {table}")
                 continue
             # drop the category columns
             sub_df = sub_df.drop(columns=["Category_EN", "Category_ES"])
@@ -555,7 +570,7 @@ class DataPreprocessor:
 
     def get_tdor_data(self, from_date=None, to_date=None, category="violence"):
         saved_data = f"./data/tdor_{THIS_YEAR}.csv"
-        if os.path.exists(saved_data):
+        if Path(saved_data).exists():
             return pd.read_csv(saved_data)
         if not TDOR_API_KEY:
             raise RuntimeError("Count not find an api key for tdor")
@@ -567,7 +582,7 @@ class DataPreprocessor:
             f"{TDOR_URL}?key={TDOR_API_KEY}&category={category}"
             + f"&from={from_date}&to={to_date}"
         )
-        request = requests.get(url)
+        request = requests_get(url)
         if request.status_code != 200:
             raise Exception("Failed to fetch TDOR data")
         data = pd.DataFrame(request.json()["data"]["reports"])
@@ -743,4 +758,4 @@ if __name__ == "__main__":
     """Run this when called directly as `python name_list.py`."""
     pp = DataPreprocessor()
     df = pp.df
-    tdor = pp.tdor
+    # tdor = pp.tdor
